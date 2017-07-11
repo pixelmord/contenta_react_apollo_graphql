@@ -1,0 +1,9 @@
+#import "./recipe.gql"
+
+query AllRecipes {
+    nodeQuery(filter: {type: "recipe"}) {
+      entities {
+        ...NodeRecipe
+      }
+  }
+}

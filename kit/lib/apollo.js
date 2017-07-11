@@ -14,6 +14,9 @@ import { APOLLO } from 'config/project';
 // repsonds with simple messages.  Update [root]/config.js as needed.
 const networkInterface = createNetworkInterface({
   uri: APOLLO.uri,
+  opts: {
+    mode: 'cors',
+  },
 });
 
 // Helper function to create a new Apollo client, by merging in

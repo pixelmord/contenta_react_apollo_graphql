@@ -1,0 +1,4 @@
+fragment NodeRecipe on NodeRecipe {
+  title: entityLabel
+  id: entityId
+}
