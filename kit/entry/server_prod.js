@@ -18,9 +18,6 @@ import { readFileSync } from 'fs';
 // so we can serve static files
 import PATHS from 'config/paths';
 
-// Local environment
-import { getHost, getPort } from 'kit/lib/env';
-
 // Import console messages
 import { logServerStarted } from 'kit/lib/console';
 
@@ -29,16 +26,9 @@ import server, { createReactHandler, staticMiddleware } from './server';
 
 // ----------------------
 
-// Host and port -- from the environment
-const HOST = getHost();
-const PORT = getPort();
-
 // Read in manifest files
-const [manifest, chunkManifest] = ['manifest', 'chunk-manifest'].map(
-  name => JSON.parse(
-    readFileSync(path.resolve(PATHS.dist, `${name}.json`), 'utf8'),
-  ),
-);
+const [manifest, chunkManifest] = ['manifest', 'chunk-manifest']
+  .map(name => JSON.parse(readFileSync(path.resolve(PATHS.dist, `${name}.json`), 'utf8')));
 
 // Get manifest values
 const css = manifest['browser.css'];
@@ -47,8 +37,11 @@ const scripts = [
   'vendor.js',
   'browser.js'].map(key => manifest[key]);
 
-// Spawn the server
-server.then(({ router, app }) => {
+// Spawn the development server.
+// Runs inside an immediate `async` block, to await listening on ports
+(async () => {
+  const { app, router, listen } = server;
+
   // Connect the production routes to the server
   router.get('/*', createReactHandler(css, scripts, chunkManifest));
   app
@@ -56,11 +49,11 @@ server.then(({ router, app }) => {
     .use(router.routes())
     .use(router.allowedMethods());
 
-  app.listen({ host: HOST, port: PORT }, () => {
-    logServerStarted({
-      type: 'server',
-      host: HOST,
-      port: PORT,
-    });
+  // Spawn the server
+  listen();
+
+  // Log to the terminal that we're ready for action
+  logServerStarted({
+    type: 'server',
   });
-});
+})();

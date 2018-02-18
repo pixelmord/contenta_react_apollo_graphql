@@ -3,12 +3,21 @@
 // ----------------------
 // IMPORTS
 
+/* NPM */
 import React from 'react';
 import PropTypes from 'prop-types';
 
+// Browser history, that we can use to control URL pushstate throughout our
+// entire app
+import createBrowserHistory from 'history/createBrowserHistory';
+
+// React Router
 import { Route, Redirect as ReactRouterRedirect } from 'react-router-dom';
 
 // ----------------------
+
+// Create and export a custom history
+export const history = !SERVER && createBrowserHistory();
 
 // <Status code="xxx"> component.  Updates the context router's context, which
 // can be used by the server handler to respond to the status on the server.
@@ -62,7 +71,6 @@ export class NotFound extends React.PureComponent {
 // <Redirect> component. Mirrors React Router's component by the same name,
 // except it sets a 301/302 status code for setting server-side HTTP headers.
 export class Redirect extends React.PureComponent {
-
   static propTypes = {
     to: PropTypes.oneOfType([
       PropTypes.string,
@@ -80,7 +88,13 @@ export class Redirect extends React.PureComponent {
   }
 
   render() {
-    const { to, from, push, permanent } = this.props;
+    const {
+      to,
+      from,
+      push,
+      permanent,
+    } = this.props;
+
     const code = permanent ? 301 : 302;
     return (
       <Status code={code}>

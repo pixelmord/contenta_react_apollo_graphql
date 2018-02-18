@@ -86,16 +86,9 @@ export default new WebpackConfig().extend('[root]/base.js').merge({
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
       minChunks: module => (
-         // this assumes your vendor imports exist in the node_modules directory
-         module.context && module.context.indexOf('node_modules') !== -1
+        // this assumes your vendor imports exist in the node_modules directory
+        module.context && module.context.indexOf('node_modules') !== -1
       ),
-    }),
-
-    // Create a `SERVER` constant that's false in the browser-- we'll use this to
-    // determine whether we're running on a Node server and set this to true
-    // in the server.js config
-    new webpack.DefinePlugin({
-      SERVER: false,
     }),
   ],
 });

@@ -15,23 +15,19 @@ import chalk from 'chalk';
 
 /* Local */
 
-
 // Import console messages
 import { css, stats } from './common';
 import { logServerStarted } from '../lib/console';
 
-// Local environment
-import { getHost, getPort, getURL } from '../lib/env';
-
-// Locla paths
+// Local paths
 import PATHS from '../../config/paths';
 
 // ----------------------
 
 // Host and port settings to spawn the dev server on
-const HOST = getHost();
-const PORT = getPort();
-const LOCAL = getURL();
+const HOST = process.env.BROWSER_HOST || 'localhost';
+const PORT = process.env.BROWSER_PORT || 8080;
+const LOCAL = `http://${HOST}:${PORT}/`;
 
 export default new WebpackConfig().extend({
   '[root]/browser.js': conf => {
@@ -79,7 +75,7 @@ export default new WebpackConfig().extend({
     compress: true,
 
     // Assume app/public is the root of our dev server
-    publicPath: '/',
+    publicPath: '',
 
     // Inline our code, so we wind up with one, giant bundle
     inline: true,
@@ -101,6 +97,11 @@ export default new WebpackConfig().extend({
       index: '/webpack.html',
     },
 
+    // Allow any origins, for use with Docker or alternate hosts, etc
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+
     // Format output stats
     stats,
   },
@@ -108,7 +109,7 @@ export default new WebpackConfig().extend({
   // Extra output options, specific to the dev server -- source maps and
   // our public path
   output: {
-    publicPath: `${LOCAL}/`,
+    publicPath: `${LOCAL}`,
   },
 
   plugins: [
@@ -121,6 +122,7 @@ export default new WebpackConfig().extend({
             host: HOST,
             port: PORT,
             chalk: chalk.bgMagenta.white,
+            allowSSL: false,
           });
         });
       },
@@ -130,5 +132,21 @@ export default new WebpackConfig().extend({
 
     // Activate the hot-reloader, so changes can be pushed to the browser
     new webpack.HotModuleReplacementPlugin(),
+
+    // Global variables
+    new webpack.DefinePlugin({
+      // We're not running on the server
+      SERVER: false,
+      'process.env': {
+        // Point the server host/port to the dev server
+        HOST: JSON.stringify(process.env.HOST || 'localhost'),
+        PORT: JSON.stringify(process.env.PORT || '8081'),
+        SSL_PORT: process.env.SSL_PORT ? JSON.stringify(process.env.SSL_PORT) : null,
+
+        // Debug development
+        NODE_ENV: JSON.stringify('development'),
+        DEBUG: true,
+      },
+    }),
   ],
 });

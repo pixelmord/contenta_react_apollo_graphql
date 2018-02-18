@@ -1,41 +1,51 @@
 // ----------------------
 // IMPORTS
 
+/* NPM */
+
 // Apollo client library
 import { createNetworkInterface, ApolloClient } from 'react-apollo';
 
-// Custom configuration/settings
-import { APOLLO } from 'config/project';
+/* ReactQL */
+
+// Configuration
+import config from 'kit/config';
+
+// Get environment, to figure out where we're running the GraphQL server
+import { getServerURL } from 'kit/lib/env';
 
 // ----------------------
 
-// Create a new Apollo network interface, to point to our API server.
-// Note:  By default in this kit, we'll connect to a sample endpoint that
-// repsonds with simple messages.  Update [root]/config.js as needed.
-const networkInterface = createNetworkInterface({
-  uri: APOLLO.uri,
-  opts: {
-    mode: 'cors',
-  },
-});
-
 // Helper function to create a new Apollo client, by merging in
-// passed options alongside the defaults
-function createClient(opt = {}) {
+// passed options alongside any set by `config.setApolloClientOptions` and defaults
+export function createClient(opt = {}) {
   return new ApolloClient(Object.assign({
     reduxRootSelector: state => state.apollo,
-    networkInterface,
-  }, opt));
+  }, config.apolloClientOptions, opt));
+}
+
+// Wrap `createNetworkInterface` to attach middleware
+export function getNetworkInterface(uri, opt) {
+  const networkInterface = createNetworkInterface({
+    uri,
+    opts: Object.assign({}, config.apolloNetworkOptions, opt),
+  });
+
+  // Attach middleware
+  networkInterface.use(config.apolloMiddleware.map(f => ({ applyMiddleware: f })));
+  networkInterface.useAfter(config.apolloAfterware.map(f => ({ applyAfterware: f })));
+
+  return networkInterface;
 }
 
 // Creates a new browser client
 export function browserClient() {
-  return createClient();
-}
+  // If we have an internal GraphQL server, we need to append it with a
+  // call to `getServerURL()` to add the correct host (in dev + production)
+  const uri = config.graphQLServer
+    ? `${getServerURL()}${config.graphQLEndpoint}` : config.graphQLEndpoint;
 
-// Creates a new server-side client
-export function serverClient() {
   return createClient({
-    ssrMode: true,
+    networkInterface: getNetworkInterface(uri),
   });
 }

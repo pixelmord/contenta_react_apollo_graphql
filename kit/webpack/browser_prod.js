@@ -22,7 +22,7 @@ import WebpackConfig from 'webpack-config';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 
 // Compression plugin for generating `.gz` static files
-import CompressionPlugin from 'compression-webpack-plugin';
+import ZopfliPlugin from 'zopfli-webpack-plugin';
 
 // Generate .br files, using the Brotli compression algorithm
 import BrotliPlugin from 'brotli-webpack-plugin';
@@ -48,13 +48,10 @@ import chalk from 'chalk';
 /* Local */
 
 // Common config
-import { css, webpackProgress } from './common';
+import { regex, css, webpackProgress } from './common';
 
 // Our local path configuration, so webpack knows where everything is/goes
 import PATHS from '../../config/paths';
-
-// Project configuration to control build settings
-import { BUNDLE_ANALYZER } from '../../config/project';
 
 // ----------------------
 
@@ -69,7 +66,7 @@ const extractCSS = new ExtractTextPlugin({
 export default new WebpackConfig().extend({
   '[root]/browser.js': config => {
     // Optimise images
-    config.module.rules.find(l => l.test.toString() === /\.(jpe?g|png|gif|svg)$/i.toString())
+    config.module.rules.find(l => l.test.toString() === regex.images.toString())
       .use.push({
         loader: 'image-webpack-loader',
         // workaround for https://github.com/tcoopman/image-webpack-loader/issues/88
@@ -96,10 +93,20 @@ export default new WebpackConfig().extend({
       `${chalk.magenta.bold('ReactQL browser bundle')} in ${chalk.bgMagenta.white.bold('production mode')}`,
     ),
 
-    // Set NODE_ENV to 'production', so that React will minify our bundle
-    new webpack.EnvironmentPlugin({
-      NODE_ENV: 'production',
-      DEBUG: false,
+    // Global variables
+    new webpack.DefinePlugin({
+      // We're not running on the server
+      SERVER: false,
+      'process.env': {
+        // Point the server host/port to the production server
+        HOST: JSON.stringify(process.env.HOST || 'localhost'),
+        PORT: JSON.stringify(process.env.PORT || '4000'),
+        SSL_PORT: process.env.SSL_PORT ? JSON.stringify(process.env.SSL_PORT) : null,
+
+        // Optimise React, etc
+        NODE_ENV: JSON.stringify('production'),
+        DEBUG: false,
+      },
     }),
 
     // Check for errors, and refuse to emit anything with issues
@@ -118,7 +125,7 @@ export default new WebpackConfig().extend({
 
     // Compress assets into .gz files, so that our Koa static handler can
     // serve those instead of the full-sized version
-    new CompressionPlugin({
+    new ZopfliPlugin({
       // Use Zopfli compression
       algorithm: 'zopfli',
       // Overwrite the default 80% compression-- anything is better than
@@ -161,14 +168,15 @@ export default new WebpackConfig().extend({
       // Put this in `dist` rather than `dist/public`
       fileName: '../manifest.json',
       // Prefix assets with '/' so that they can be referenced from any route
-      publicPath: '/',
+      publicPath: '',
+      inlineManifest: true,
     }),
 
     // Output interactive bundle report
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',
       reportFilename: join(PATHS.dist, 'report.html'),
-      openAnalyzer: BUNDLE_ANALYZER.openAnalyzer,
+      openAnalyzer: !!process.env.BUNDLE_ANALYZER,
     }),
 
     // Enable scope hoisting to speed up JS loading

@@ -19,7 +19,7 @@ import WebpackConfig from 'webpack-config';
 /* Local */
 
 // Common config
-import { stats } from './common';
+import { regex, stats } from './common';
 
 // Our local path configuration, so webpack knows where everything is/goes.
 // Since we haven't yet established our module resolution paths, we have to
@@ -27,6 +27,9 @@ import { stats } from './common';
 import PATHS from '../../config/paths';
 
 // ----------------------
+
+// RegExp for image files
+
 
 // Export a new 'base' config, which we can extend/merge from
 export default new WebpackConfig().merge({
@@ -44,6 +47,7 @@ export default new WebpackConfig().merge({
     // short-hand imports without knowing the full/relative path.  If it
     // doesn't find anything, then it'll check `node_modules` as normal
     modules: [
+      PATHS.src,
       PATHS.root,
       'node_modules',
     ],
@@ -56,25 +60,18 @@ export default new WebpackConfig().merge({
     rules: [
       // Fonts
       {
-        test: /\.(woff|woff2|ttf|eot)$/i,
+        test: regex.fonts,
         loader: 'file-loader',
         query: {
           name: 'assets/fonts/[name].[hash].[ext]',
         },
       },
 
-      // GraphQL queries
-      {
-        test: /\.(graphql|gql)$/,
-        exclude: /node_modules/,
-        loader: 'graphql-tag/loader',
-      },
-
       // Images.  By default, we'll just use the file loader.  In production,
       // we'll also crunch the images first -- so let's set up `loaders` to
       // be an array to make extending this easier
       {
-        test: /\.(jpe?g|png|gif|svg)$/i,
+        test: regex.images,
         use: [
           {
             loader: 'file-loader',
@@ -83,6 +80,13 @@ export default new WebpackConfig().merge({
             },
           },
         ],
+      },
+
+      // GraphQL queries
+      {
+        test: /\.(graphql|gql)$/,
+        exclude: /node_modules/,
+        loader: 'graphql-tag/loader',
       },
     ],
   },
@@ -95,7 +99,7 @@ export default new WebpackConfig().merge({
     path: PATHS.public,
 
     // Deem the `dist` folder to be the root of our web server
-    publicPath: '/',
+    publicPath: '',
 
     // Filenames will simply be <name>.js
     filename: '[name].js',
