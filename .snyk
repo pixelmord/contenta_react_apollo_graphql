@@ -1,0 +1,18 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.14.1
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-LODASH-567746:
+    - redux > lodash:
+        patched: '2020-05-01T08:28:04.709Z'
+    - react-redux > lodash:
+        patched: '2020-05-01T08:28:04.709Z'
+    - react-apollo > enzyme-adapter-react-16 > lodash:
+        patched: '2020-05-01T08:28:04.709Z'
+    - react-hot-loader > react-proxy > lodash:
+        patched: '2020-05-01T08:28:04.709Z'
+    - react-apollo > apollo-client > redux > lodash:
+        patched: '2020-05-01T08:28:04.709Z'
+    - react-apollo > enzyme-adapter-react-16 > enzyme-adapter-utils > lodash:
+        patched: '2020-05-01T08:28:04.709Z'
