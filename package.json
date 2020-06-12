@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "apollo-local-query": "^0.3.1",
-    "apollo-server-koa": "^1.2.0",
+    "apollo-server-koa": "^2.1.0",
     "boxen": "^1.2.2",
     "chalk": "^2.3.0",
     "graphql": "^0.11.7",
